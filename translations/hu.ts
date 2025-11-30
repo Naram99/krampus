@@ -38,11 +38,11 @@ export default {
     title: "Beállítások",
     budgetSettings: "Költségvetési beállítások",
     globalBudgetLimit: "Globális költségvetési limit",
-    globalBudgetDescription: "Összes ajándékra vonatkozó teljes költségvetés (0-ra állítás letiltáshoz)",
+    globalBudgetDescription: "Összes ajándékra vonatkozó limit (0 esetén nincs limit)",
     defaultPriceLimit: "Alapértelmezett árlimit",
     defaultPriceDescription: "Alapértelmezett árlimit új személyekhez",
     currency: "Pénznem",
-    currencyDescription: "Válaszd ki az összes ár pénznemét",
+    currencyDescription: "Válaszd ki a pénznemet",
     notifications: "Értesítések",
     enableNotifications: "Értesítések engedélyezése",
     notificationsDescription: "Emlékeztetők fogadása az ajándékokról",
@@ -51,6 +51,12 @@ export default {
     saveSettings: "Beállítások mentése",
     saveSuccess: "Beállítások sikeresen mentve!",
     errorPrice: "Az alapértelmezett árlimitnek 0-nál nagyobbnak kell lennie",
+    alertSuccess: "Siker",
+    alertError: "Hiba",
+  },
+  notifications: {
+    reminderTitle: "🎁 Ideje ajándékokat vásárolni!",
+    reminderMessage: "Ne felejtsd el az ajándékokat vásárolni! Haladás: {progress}% ({bought}/{total} megvásárolva)",
   },
 };
 

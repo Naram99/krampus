@@ -1,20 +1,19 @@
-import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  RefreshControl,
-  Modal,
-  Alert,
-} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { Person, AppSettings } from "../../types";
-import { getPeople, savePeople, getSettings } from "../../utils/storage";
+import React, { useCallback, useState } from "react";
+import {
+  FlatList,
+  Modal,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { AppSettings, Person } from "../../types";
 import { formatCurrency, getCurrencySymbol } from "../../utils/currency";
 import { t } from "../../utils/i18n";
+import { getPeople, getSettings, savePeople } from "../../utils/storage";
 import { colors } from "../../utils/theme";
 
 export default function MainPage() {
@@ -66,10 +65,6 @@ export default function MainPage() {
     if (!checkingPerson) return;
 
     const priceNum = parseFloat(priceInput) || 0;
-    if (priceNum <= 0) {
-      Alert.alert("Error", t("people.errorPrice"));
-      return;
-    }
 
     const updatedPeople = people.map((person) =>
       person.id === checkingPerson.id

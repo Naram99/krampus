@@ -51,6 +51,12 @@ export default {
     saveSettings: "Save Settings",
     saveSuccess: "Settings saved successfully!",
     errorPrice: "Default price limit must be greater than 0",
+    alertSuccess: "Success",
+    alertError: "Error",
+  },
+  notifications: {
+    reminderTitle: "🎁 Time to Buy Presents!",
+    reminderMessage: "Don't forget to buy presents! Progress: {progress}% ({bought}/{total} bought)",
   },
 };
 

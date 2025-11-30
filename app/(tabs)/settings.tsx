@@ -46,7 +46,7 @@ export default function SettingsPage() {
     const defaultPrice = parseFloat(defaultPriceInput) || 50;
 
     if (defaultPrice <= 0) {
-      Alert.alert("Error", t("settings.errorPrice"));
+      Alert.alert(t("settings.alertError"), t("settings.errorPrice"));
       return;
     }
 
@@ -60,7 +60,7 @@ export default function SettingsPage() {
 
     setSettings(updatedSettings);
     await saveSettings(updatedSettings);
-    Alert.alert("Success", t("settings.saveSuccess"));
+    Alert.alert(t("settings.alertSuccess"), t("settings.saveSuccess"));
   };
 
   const toggleNotifications = async (value: boolean) => {

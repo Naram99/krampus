@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { getSettings } from "../../utils/storage";
 import { t, getLanguage } from "../../utils/i18n";
 
@@ -15,6 +15,36 @@ export default function TabsLayout() {
         setLanguage(getLanguage());
       });
     }, [])
+  );
+
+  const indexOptions = useMemo(
+    () => ({
+      title: t("main.title"),
+      tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+        <Ionicons name="home" size={size} color={color} />
+      ),
+    }),
+    [language]
+  );
+
+  const peopleOptions = useMemo(
+    () => ({
+      title: t("people.title"),
+      tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+        <Ionicons name="people" size={size} color={color} />
+      ),
+    }),
+    [language]
+  );
+
+  const settingsOptions = useMemo(
+    () => ({
+      title: t("settings.title"),
+      tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+        <Ionicons name="settings" size={size} color={color} />
+      ),
+    }),
+    [language]
   );
 
   return (
@@ -34,33 +64,9 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t("main.title"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="people"
-        options={{
-          title: t("people.title"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: t("settings.title"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={indexOptions} />
+      <Tabs.Screen name="people" options={peopleOptions} />
+      <Tabs.Screen name="settings" options={settingsOptions} />
     </Tabs>
   );
 }
