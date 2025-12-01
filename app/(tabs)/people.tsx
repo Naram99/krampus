@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Modal,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { Person, AppSettings } from "../../types";
-import { getPeople, savePeople, getSettings } from "../../utils/storage";
+import React, { useCallback, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { AppSettings, Person } from "../../types";
 import { formatCurrency, getCurrencySymbol } from "../../utils/currency";
 import { t } from "../../utils/i18n";
+import { getPeople, getSettings, savePeople } from "../../utils/storage";
 import { colors } from "../../utils/theme";
 
 export default function PeoplePage() {
@@ -199,72 +202,83 @@ export default function PeoplePage() {
         transparent={true}
         onRequestClose={closeModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingPerson ? t("people.editPerson") : t("people.addPerson")}
-            </Text>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+          <ScrollView
+            contentContainerStyle={styles.modalScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={true}
+            bounces={false}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {editingPerson ? t("people.editPerson") : t("people.addPerson")}
+              </Text>
 
-            <Text style={styles.label}>{t("people.name")} *</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder={t("people.name")}
-              value={formData.name}
-              onChangeText={(text) =>
-                setFormData({ ...formData, name: text })
-              }
-            />
-
-            <Text style={styles.label}>{t("people.presentType")} *</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder={t("people.presentTypePlaceholder")}
-              value={formData.presentType}
-              onChangeText={(text) =>
-                setFormData({ ...formData, presentType: text })
-              }
-            />
-
-            <Text style={styles.label}>{t("people.presentName")}</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder={t("people.presentNamePlaceholder")}
-              value={formData.presentName}
-              onChangeText={(text) =>
-                setFormData({ ...formData, presentName: text })
-              }
-            />
-
-            <Text style={styles.label}>{t("people.priceLimit")} *</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.currencySymbol}>{currencySymbol}</Text>
+              <Text style={styles.label}>{t("people.name")} *</Text>
               <TextInput
-                style={styles.input}
-                placeholder={t("people.priceLimitPlaceholder")}
-                keyboardType="numeric"
-                value={formData.priceLimit}
+                style={styles.modalInput}
+                placeholder={t("people.name")}
+                value={formData.name}
                 onChangeText={(text) =>
-                  setFormData({ ...formData, priceLimit: text })
+                  setFormData({ ...formData, name: text })
                 }
               />
-            </View>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={closeModal}
-              >
-                <Text style={styles.cancelButtonText}>{t("people.cancel")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>{t("people.save")}</Text>
-              </TouchableOpacity>
+              <Text style={styles.label}>{t("people.presentType")} *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder={t("people.presentTypePlaceholder")}
+                value={formData.presentType}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, presentType: text })
+                }
+              />
+
+              <Text style={styles.label}>{t("people.presentName")}</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder={t("people.presentNamePlaceholder")}
+                value={formData.presentName}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, presentName: text })
+                }
+              />
+
+              <Text style={styles.label}>{t("people.priceLimit")} *</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.currencySymbol}>{currencySymbol}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("people.priceLimitPlaceholder")}
+                  keyboardType="numeric"
+                  value={formData.priceLimit}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, priceLimit: text })
+                  }
+                />
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={closeModal}
+                >
+                  <Text style={styles.cancelButtonText}>{t("people.cancel")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={handleSave}
+                >
+                  <Text style={styles.saveButtonText}>{t("people.save")}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -361,6 +375,14 @@ const styles = StyleSheet.create({
     padding: 24,
     width: "90%",
     maxWidth: 400,
+    alignSelf: "center",
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
   },
   modalTitle: {
     fontSize: 24,
@@ -408,13 +430,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     marginTop: 24,
     gap: 12,
+    flexWrap: "wrap",
   },
   modalButton: {
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    minWidth: 100,
+    minWidth: 80,
     alignItems: "center",
+    flexShrink: 1,
   },
   cancelButton: {
     backgroundColor: "#f0f0f0",

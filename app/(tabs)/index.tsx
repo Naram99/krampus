@@ -2,13 +2,16 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { AppSettings, Person } from "../../types";
 import { formatCurrency, getCurrencySymbol } from "../../utils/currency";
@@ -132,7 +135,7 @@ export default function MainPage() {
         </TouchableOpacity>
       </View>
       <Text style={styles.presentInfo}>
-        {item.isBought && item.presentName
+        {item.presentName
           ? `${t("main.present")} ${item.presentName}`
           : `${t("main.category")} ${item.presentType}`}
       </Text>
@@ -197,45 +200,55 @@ export default function MainPage() {
 
       <Modal
         visible={priceModalVisible}
-        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelPrice}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {checkingPerson ? `${t("main.actualPrice")} - ${checkingPerson.name}` : ""}
-            </Text>
-            <Text style={styles.modalDescription}>
-              {t("main.priceLimit")} {checkingPerson ? formatCurrency(checkingPerson.priceLimit, currency) : ""}
-            </Text>
-            <View style={styles.modalInputContainer}>
-              <Text style={styles.modalCurrencySymbol}>{currencySymbol}</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="0.00"
-                keyboardType="numeric"
-                value={priceInput}
-                onChangeText={setPriceInput}
-                autoFocus={true}
-              />
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+          <ScrollView
+            contentContainerStyle={styles.modalScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {checkingPerson ? `${t("main.actualPrice")} - ${checkingPerson.name}` : ""}
+              </Text>
+              <Text style={styles.modalDescription}>
+                {t("main.priceLimit")} {checkingPerson ? formatCurrency(checkingPerson.priceLimit, currency) : ""}
+              </Text>
+              <View style={styles.modalInputContainer}>
+                <Text style={styles.modalCurrencySymbol}>{currencySymbol}</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="0.00"
+                  keyboardType="numeric"
+                  value={priceInput}
+                  onChangeText={setPriceInput}
+                  autoFocus={true}
+                />
+              </View>
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalCancelButton]}
+                  onPress={handleCancelPrice}
+                >
+                  <Text style={styles.modalCancelButtonText}>{t("people.cancel")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalSaveButton]}
+                  onPress={handleSavePrice}
+                >
+                  <Text style={styles.modalSaveButtonText}>{t("people.save")}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalCancelButton]}
-                onPress={handleCancelPrice}
-              >
-                <Text style={styles.modalCancelButtonText}>{t("people.cancel")}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalSaveButton]}
-                onPress={handleSavePrice}
-              >
-                <Text style={styles.modalSaveButtonText}>{t("people.save")}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -393,6 +406,14 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     borderWidth: 3,
     borderColor: colors.christmasRed,
+    alignSelf: "center",
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
   },
   modalTitle: {
     fontSize: 24,
@@ -430,13 +451,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 12,
+    flexWrap: "wrap",
   },
   modalButton: {
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    minWidth: 100,
+    minWidth: 80,
     alignItems: "center",
+    flexShrink: 1,
   },
   modalCancelButton: {
     backgroundColor: colors.lightGray,

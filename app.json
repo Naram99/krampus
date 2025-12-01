@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "krampus",
-    "slug": "krampus",
-    "version": "1.0.0",
+    "name": "Krampus",
+    "slug": "Krampus",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/app.png",
-    "scheme": "krampus",
+    "scheme": "Krampus",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
