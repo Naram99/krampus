@@ -1,21 +1,29 @@
+export type Currency = 'USD' | 'EUR' | 'HUF';
+export type Language = 'en' | 'de' | 'hu';
+
+/** Monetary values are integer hundredths, including HUF. */
 export interface Person {
   id: string;
   name: string;
   presentType: string;
   presentName: string;
-  priceLimit: number;
+  priceLimitMinor: number;
   isBought: boolean;
-  actualPrice?: number;
+  actualPriceMinor?: number;
 }
-
-export type Currency = 'USD' | 'EUR' | 'HUF';
-export type Language = 'en' | 'de' | 'hu';
-
 export interface AppSettings {
-  globalBudgetLimit: number;
-  defaultPriceLimit: number;
+  globalBudgetLimitMinor: number | null;
+  defaultPriceLimitMinor: number;
   notificationsEnabled: boolean;
   currency: Currency;
   language: Language;
+  reminderDays: number[];
+  reminderHour: number;
+  reminderMinute: number;
 }
-
+export interface AppData {
+  version: 2;
+  shoppingYear: number;
+  people: Person[];
+  settings: AppSettings;
+}

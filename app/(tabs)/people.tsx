@@ -1,460 +1,81 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { AppSettings, Person } from "../../types";
-import { formatCurrency, getCurrencySymbol } from "../../utils/currency";
-import { t } from "../../utils/i18n";
-import { getPeople, getSettings, savePeople } from "../../utils/storage";
-import { colors } from "../../utils/theme";
+import React, { useEffect, useState } from 'react';
+import { Alert, FlatList, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Button, Dialog, Field } from '../../components/ui';
+import { ReminderNotice } from '../../components/ReminderNotice';
+import { useApp } from '../../state/AppProvider';
+import { Person } from '../../types';
+import { formatCurrency, moneyInput, parseMoney } from '../../utils/currency';
+import { newPersonId } from '../../utils/data';
+import { sharedStyles as s } from '../../utils/theme';
 
 export default function PeoplePage() {
-  const [people, setPeople] = useState<Person[]>([]);
-  const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    presentType: "",
-    presentName: "",
-    priceLimit: "",
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [])
-  );
-
-  const loadData = async () => {
-    const [peopleData, settingsData] = await Promise.all([
-      getPeople(),
-      getSettings(),
-    ]);
-    setPeople(peopleData);
-    setSettings(settingsData);
+  const { data, update, busy, t } = useApp();
+  const params = useLocalSearchParams<{ add?: string }>();
+  const router = useRouter();
+  const [visible, setVisible] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: '', category: '', gift: '', budget: '' });
+  const [errors, setErrors] = useState<{ name?: string; budget?: string; save?: string }>({});
+  const { currency, language, defaultPriceLimitMinor } = data.settings;
+  const open = (person?: Person) => {
+    setEditing(person?.id ?? null);
+    setForm({ name: person?.name ?? '', category: person?.presentType ?? '', gift: person?.presentName ?? '', budget: moneyInput(person?.priceLimitMinor ?? defaultPriceLimitMinor) });
+    setErrors({}); setVisible(true);
   };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      presentType: "",
-      presentName: "",
-      priceLimit: settings?.defaultPriceLimit.toString() || "50",
-    });
-    setEditingPerson(null);
-  };
-
-  const openAddModal = () => {
-    resetForm();
-    setModalVisible(true);
-  };
-
-  const openEditModal = (person: Person) => {
-    setEditingPerson(person);
-    setFormData({
-      name: person.name,
-      presentType: person.presentType,
-      presentName: person.presentName,
-      priceLimit: person.priceLimit.toString(),
-    });
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    resetForm();
-  };
-
-  const handleSave = async () => {
-    if (!formData.name.trim()) {
-      Alert.alert("Error", t("people.errorName"));
-      return;
+  useEffect(() => {
+    if (params.add === '1') {
+      setEditing(null); setForm({ name: '', category: '', gift: '', budget: moneyInput(defaultPriceLimitMinor) });
+      setErrors({}); setVisible(true); router.setParams({ add: undefined });
     }
-    if (!formData.presentType.trim()) {
-      Alert.alert("Error", t("people.errorType"));
-      return;
-    }
-    if (!formData.priceLimit || parseFloat(formData.priceLimit) <= 0) {
-      Alert.alert("Error", t("people.errorPrice"));
-      return;
-    }
-
-    const priceLimit = parseFloat(formData.priceLimit);
-
-    if (editingPerson) {
-      // Update existing person
-      const updatedPeople = people.map((p) =>
-        p.id === editingPerson.id
-          ? {
-              ...p,
-              name: formData.name.trim(),
-              presentType: formData.presentType.trim(),
-              presentName: formData.presentName.trim(),
-              priceLimit,
-            }
-          : p
-      );
-      setPeople(updatedPeople);
-      await savePeople(updatedPeople);
-    } else {
-      // Add new person
-      const newPerson: Person = {
-        id: Date.now().toString(),
-        name: formData.name.trim(),
-        presentType: formData.presentType.trim(),
-        presentName: formData.presentName.trim(),
-        priceLimit,
-        isBought: false,
-      };
-      const updatedPeople = [...people, newPerson];
-      setPeople(updatedPeople);
-      await savePeople(updatedPeople);
-    }
-
-    closeModal();
+  }, [params.add, defaultPriceLimitMinor, router]);
+  const save = async () => {
+    if (busy) return;
+    const nextErrors: typeof errors = {};
+    if (!form.name.trim()) nextErrors.name = t('invalidName');
+    let priceLimitMinor = 0;
+    try { priceLimitMinor = parseMoney(form.budget, false); } catch { nextErrors.budget = t('positiveMoney'); }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+    try {
+      await update(current => {
+        const fields = { name: form.name.trim(), presentType: form.category.trim(), presentName: form.gift.trim(), priceLimitMinor };
+        const people = editing ? current.people.map(p => p.id === editing ? { ...p, ...fields } : p)
+          : [...current.people, { ...fields, id: newPersonId(current.people), isBought: false }];
+        return { ...current, people };
+      });
+      setVisible(false);
+    } catch { setErrors({ save: t('saveError') }); }
   };
-
-  const handleDelete = (person: Person) => {
-    Alert.alert(
-      t("people.deleteConfirm"),
-      `${t("people.deleteMessage")} ${person.name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            const updatedPeople = people.filter((p) => p.id !== person.id);
-            setPeople(updatedPeople);
-            await savePeople(updatedPeople);
-          },
-        },
-      ]
-    );
-  };
-
-  const currency = settings?.currency || 'USD';
-  const currencySymbol = getCurrencySymbol(currency);
-
-  const renderPersonItem = ({ item }: { item: Person }) => (
-    <View style={styles.personCard}>
-      <View style={styles.personInfo}>
-        <Text style={styles.personName}>{item.name}</Text>
-        <Text style={styles.personDetails}>
-          {t("people.type")} {item.presentType} | {t("people.limit")} {formatCurrency(item.priceLimit, currency)}
-        </Text>
-        {item.presentName && (
-          <Text style={styles.presentName}>{t("people.present")} {item.presentName}</Text>
-        )}
-      </View>
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => openEditModal(item)}
-        >
-          <Ionicons name="pencil" size={20} color="#007AFF" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDelete(item)}
-        >
-          <Ionicons name="trash" size={20} color="#ff3b30" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      <FlatList
-        data={people}
-        renderItem={renderPersonItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {t("people.emptyMessage")}
-            </Text>
-          </View>
-        }
-        contentContainerStyle={styles.listContent}
-      />
-      <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closeModal}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-        >
-          <ScrollView
-            contentContainerStyle={styles.modalScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={true}
-            bounces={false}
-          >
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>
-                {editingPerson ? t("people.editPerson") : t("people.addPerson")}
-              </Text>
-
-              <Text style={styles.label}>{t("people.name")} *</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder={t("people.name")}
-                value={formData.name}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, name: text })
-                }
-              />
-
-              <Text style={styles.label}>{t("people.presentType")} *</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder={t("people.presentTypePlaceholder")}
-                value={formData.presentType}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, presentType: text })
-                }
-              />
-
-              <Text style={styles.label}>{t("people.presentName")}</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder={t("people.presentNamePlaceholder")}
-                value={formData.presentName}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, presentName: text })
-                }
-              />
-
-              <Text style={styles.label}>{t("people.priceLimit")} *</Text>
-              <View style={styles.inputContainer}>
-                <Text style={styles.currencySymbol}>{currencySymbol}</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={t("people.priceLimitPlaceholder")}
-                  keyboardType="numeric"
-                  value={formData.priceLimit}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, priceLimit: text })
-                  }
-                />
-              </View>
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={closeModal}
-                >
-                  <Text style={styles.cancelButtonText}>{t("people.cancel")}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton]}
-                  onPress={handleSave}
-                >
-                  <Text style={styles.saveButtonText}>{t("people.save")}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    </View>
-  );
+  const remove = (person: Person) => Alert.alert(t('deletePersonTitle', { name: person.name }), t('deletePersonBody'), [
+    { text: t('cancel'), style: 'cancel' }, { text: t('delete'), style: 'destructive', onPress: () => {
+      void update(current => ({ ...current, people: current.people.filter(p => p.id !== person.id) })).catch(() => Alert.alert(t('error'), t('saveError')));
+    } },
+  ]);
+  return <SafeAreaView edges={['left', 'right']} style={s.screen}>
+    <FlatList data={data.people} keyExtractor={p => p.id} contentContainerStyle={s.content}
+      ListHeaderComponent={<View style={{ gap: 16, marginBottom: 16 }}><ReminderNotice />
+        <Button title={t('addPerson')} disabled={busy} onPress={() => open()} />
+      </View>}
+      ListEmptyComponent={<View style={s.card}><Text style={s.text}>{t('empty')}</Text></View>}
+      renderItem={({ item }) => <View style={[s.card, { marginBottom: 12 }]}>
+        <Text style={s.heading}>{item.name}</Text>
+        <Text style={s.text}>{item.presentName || item.presentType || t('noIdea')}</Text>
+        <Text style={s.muted}>{t('personBudget')}: {formatCurrency(item.priceLimitMinor, currency, language)}</Text>
+        <View style={s.row}>
+          <Button title={t('edit')} label={`${t('edit')}: ${item.name}`} variant="secondary" disabled={busy} onPress={() => open(item)} />
+          <Button title={t('delete')} label={`${t('delete')}: ${item.name}`} variant="danger" disabled={busy} onPress={() => remove(item)} />
+        </View>
+      </View>} />
+    <Dialog visible={visible} title={t(editing ? 'editPerson' : 'addPerson')} onClose={() => { if (!busy) setVisible(false); }}>
+      <Field label={`${t('name')} *`} value={form.name} editable={!busy} error={errors.name} onChangeText={name => setForm({ ...form, name })} autoFocus />
+      <Field label={t('category')} value={form.category} editable={!busy} onChangeText={category => setForm({ ...form, category })} />
+      <Field label={t('giftName')} value={form.gift} editable={!busy} onChangeText={gift => setForm({ ...form, gift })} />
+      <Field label={`${t('personBudget')} (${currency}) *`} value={form.budget} editable={!busy} keyboardType="decimal-pad" error={errors.budget} onChangeText={budget => setForm({ ...form, budget })} />
+      {errors.save && <Text accessibilityLiveRegion="polite" style={s.warning}>{errors.save}</Text>}
+      <Button title={t('save')} disabled={busy} onPress={() => void save()} />
+      <Button title={t('cancel')} disabled={busy} variant="secondary" onPress={() => setVisible(false)} />
+    </Dialog>
+  </SafeAreaView>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.snow,
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  personCard: {
-    backgroundColor: colors.white,
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: colors.christmasGreen,
-    shadowColor: colors.darkBrown,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  personInfo: {
-    flex: 1,
-  },
-  personName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.darkBrown,
-    marginBottom: 4,
-  },
-  personDetails: {
-    fontSize: 14,
-    color: colors.gingerbread,
-    marginBottom: 4,
-  },
-  presentName: {
-    fontSize: 14,
-    color: colors.christmasRed,
-    fontStyle: "italic",
-  },
-  actions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  editButton: {
-    padding: 8,
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  addButton: {
-    position: "absolute",
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  emptyContainer: {
-    padding: 40,
-    alignItems: "center",
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "#999",
-    textAlign: "center",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 24,
-    width: "90%",
-    maxWidth: 400,
-    alignSelf: "center",
-  },
-  modalScrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    color: "#333",
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginTop: 12,
-    marginBottom: 8,
-    color: colors.darkBrown,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: colors.christmasGreen,
-    borderRadius: 8,
-    backgroundColor: colors.snow,
-  },
-  currencySymbol: {
-    fontSize: 18,
-    color: colors.darkBrown,
-    paddingLeft: 12,
-    paddingRight: 8,
-  },
-  input: {
-    flex: 1,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: "transparent",
-  },
-  modalInput: {
-    borderWidth: 2,
-    borderColor: colors.christmasGreen,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: colors.snow,
-  },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 24,
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  modalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    minWidth: 80,
-    alignItems: "center",
-    flexShrink: 1,
-  },
-  cancelButton: {
-    backgroundColor: "#f0f0f0",
-  },
-  cancelButtonText: {
-    color: "#666",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  saveButton: {
-    backgroundColor: "#007AFF",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
-
