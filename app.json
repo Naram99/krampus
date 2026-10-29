@@ -1,72 +1,69 @@
 {
-  "expo": {
-    "name": "Krampus",
-    "slug": "krampus",
-    "version": "0.3.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/app.png",
-    "scheme": "krampus",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/images/app.png",
-        "monochromeImage": "./assets/images/monochrome.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.naram99.krampus",
-      "allowBackup": true,
-      "blockedPermissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
-      ]
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/app.png"
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/app.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/notification.png",
-          "color": "#C41E3A",
-          "sounds": []
-        }
-      ],
-      "./plugins/withOfflineAndroid"
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "4cda8e5c-a008-4cde-952c-98ac379c2635"
-      }
-    },
-    "platforms": [
-      "android",
-      "web"
-    ]
-  }
+    "expo": {
+        "name": "Krampus",
+        "slug": "krampus",
+        "version": "0.4.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/app.png",
+        "scheme": "krampus",
+        "userInterfaceStyle": "light",
+        "newArchEnabled": true,
+        "ios": {
+            "supportsTablet": true
+        },
+        "android": {
+            "adaptiveIcon": {
+                "backgroundColor": "#FFFFFF",
+                "foregroundImage": "./assets/images/app.png",
+                "monochromeImage": "./assets/images/monochrome.png"
+            },
+            "edgeToEdgeEnabled": true,
+            "predictiveBackGestureEnabled": false,
+            "package": "com.naram99.krampus",
+            "allowBackup": true,
+            "blockedPermissions": [
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE"
+            ]
+        },
+        "web": {
+            "output": "static",
+            "favicon": "./assets/images/app.png"
+        },
+        "plugins": [
+            "expo-router",
+            [
+                "expo-splash-screen",
+                {
+                    "image": "./assets/images/app.png",
+                    "imageWidth": 200,
+                    "resizeMode": "contain",
+                    "backgroundColor": "#ffffff",
+                    "dark": {
+                        "backgroundColor": "#000000"
+                    }
+                }
+            ],
+            [
+                "expo-notifications",
+                {
+                    "icon": "./assets/images/notification.png",
+                    "color": "#C41E3A",
+                    "sounds": []
+                }
+            ],
+            "./plugins/withOfflineAndroid"
+        ],
+        "experiments": {
+            "typedRoutes": true,
+            "reactCompiler": true
+        },
+        "extra": {
+            "router": {},
+            "eas": {
+                "projectId": "4cda8e5c-a008-4cde-952c-98ac379c2635"
+            }
+        },
+        "platforms": ["android", "web"]
+    }
 }
