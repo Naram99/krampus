@@ -85,5 +85,18 @@ export default {
   "deleteAll": "Alle lokalen Daten löschen",
   "deleteAllTitle": "Alle lokalen Daten endgültig löschen?",
   "deleteAllBody": "Liste, Einstellungen, Wiederherstellungskopien und geplante Erinnerungen werden entfernt. Dies kann in der App nicht rückgängig gemacht werden.",
-  "deleteError": "Nicht alle lokalen Daten konnten gelöscht werden. Bitte versuche es erneut."
+  "deleteError": "Nicht alle lokalen Daten konnten gelöscht werden. Bitte versuche es erneut.",
+  "onboardingSetup": "Ersteinrichtung",
+  "onboardingStep": "Schritt {step} von {total}",
+  "onboardingWelcome": "Willkommen bei Krampus!",
+  "onboardingWelcomeBody": "Plane deine Geschenke und behalte dein Budget im Blick. Wähle die Sprache, in der du dich zu Hause fühlst.",
+  "onboardingBudgetTitle": "Währung und Budget",
+  "onboardingBudgetBody": "Wähle deine Währung und lege fest, wie viel du für Geschenke ausgeben möchtest.",
+  "onboardingCurrencyHelp": "Alle Beträge gelten in der gewählten Währung.",
+  "onboardingDefaultHelp": "Das Standardbudget wird für jede neue Person vorausgefüllt und lässt sich individuell ändern.",
+  "onboardingNext": "Weiter",
+  "onboardingBack": "Zurück",
+  "onboardingFinish": "Speichern und starten",
+  "onboardingSkip": "Jetzt überspringen",
+  "onboardingSkipHelp": "Beim Überspringen bleiben die Standardeinstellungen erhalten. Du kannst später alles in den Einstellungen ändern."
 } satisfies typeof en;

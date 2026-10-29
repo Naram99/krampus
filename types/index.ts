@@ -23,6 +23,7 @@ export interface AppSettings {
 }
 export interface AppData {
   version: 2;
+  onboardingCompleted: boolean;
   shoppingYear: number;
   people: Person[];
   settings: AppSettings;

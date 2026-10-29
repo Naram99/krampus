@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { parseMoney, formatCurrency, moneyInput, MAX_MINOR } = require('../utils/currency.ts');
-const { defaultData, validateData, migrateLegacy, calculateStats, newPersonId } = require('../utils/data.ts');
+const { defaultData, validateData, readStoredData, migrateLegacy, calculateStats, newPersonId } = require('../utils/data.ts');
 const { createRepository, STORAGE_KEYS: K } = require('../utils/repository.ts');
 const { planReminders, createReminderService } = require('../utils/reminders.ts');
 const { createTranslator } = require('../utils/i18n.ts');
@@ -68,11 +68,56 @@ test('repository migrates once, verifies output, preserves sources and reloads p
   const store = memory({ [K.people]: oldPeople });
   const repo = createRepository(store, () => defaultData('hu', 2026));
   const migrated = await repo.load();
+  assert.equal(migrated.onboardingCompleted, true);
   assert.equal(migrated.people[0].priceLimitMinor, 1299); assert.equal(store.values.get(K.people), oldPeople);
   assert.equal(JSON.parse(store.values.get(K.legacyBackup)).people, oldPeople);
   await repo.update(d => ({ ...d, people: d.people.map(p => ({ ...p, isBought: true, actualPriceMinor: 0 })) }));
   const reloaded = await createRepository(store, () => defaultData()).load();
   assert.equal(reloaded.people[0].actualPriceMinor, 0); assert.equal(reloaded.people[0].isBought, true);
+});
+test('existing v2 installs and recovery copies bypass onboarding without changing saved choices', async () => {
+  const old = data({ people: [person({ isBought: true, actualPriceMinor: 0 })] });
+  delete old.onboardingCompleted;
+  old.settings.currency = 'EUR'; old.settings.defaultPriceLimitMinor = 7500;
+  const raw = JSON.stringify(old);
+  const store = memory({ [K.data]: raw, [K.backup]: raw });
+  const repo = createRepository(store, () => defaultData());
+  const loaded = await repo.load();
+  assert.equal(loaded.onboardingCompleted, true);
+  assert.deepEqual(loaded.settings, old.settings);
+  assert.deepEqual(loaded.people, old.people);
+  assert.equal(store.values.get(K.data), raw);
+  assert.equal((await repo.restore()).onboardingCompleted, true);
+  assert.throws(() => readStoredData({ ...old, onboardingCompleted: 'false' }));
+});
+test('fresh onboarding survives restart until completion and saves preferences together', async () => {
+  const store = memory();
+  const makeRepo = () => createRepository(store, () => defaultData('hu', 2026));
+  assert.equal((await makeRepo().load()).onboardingCompleted, false);
+  const repo = makeRepo();
+  assert.equal((await repo.load()).onboardingCompleted, false);
+  await repo.update(d => ({ ...d, onboardingCompleted: true, settings: {
+    ...d.settings, language: 'de', currency: 'EUR', globalBudgetLimitMinor: 25000, defaultPriceLimitMinor: 3050,
+  } }));
+  const loaded = await makeRepo().load();
+  assert.equal(loaded.onboardingCompleted, true);
+  assert.equal(loaded.settings.language, 'de'); assert.equal(loaded.settings.currency, 'EUR');
+  assert.equal(loaded.settings.globalBudgetLimitMinor, 25000); assert.equal(loaded.settings.defaultPriceLimitMinor, 3050);
+  assert.equal(loaded.settings.notificationsEnabled, false);
+});
+test('skipping onboarding retains defaults and failed completion can be retried', async () => {
+  const store = memory(); const repo = createRepository(store, () => defaultData('hu', 2026));
+  const original = await repo.load();
+  const realSet = store.setItem;
+  store.setItem = async (key, value) => { if (key === K.data) throw Error('disk full'); await realSet(key, value); };
+  await assert.rejects(repo.update(d => ({ ...d, onboardingCompleted: true })));
+  assert.equal(JSON.parse(store.values.get(K.data)).onboardingCompleted, false);
+  store.setItem = realSet;
+  const skipped = await repo.update(d => ({ ...d, onboardingCompleted: true }));
+  assert.deepEqual(skipped.settings, original.settings);
+  assert.equal((await createRepository(store, () => defaultData()).load()).onboardingCompleted, true);
+  await repo.clear();
+  assert.equal((await repo.load()).onboardingCompleted, false);
 });
 test('failed migration verification preserves old data and blocks updates', async () => {
   const source = '[{"id":"a","name":"A","priceLimit":10,"isBought":false}]';

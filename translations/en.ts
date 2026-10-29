@@ -83,5 +83,18 @@ export default {
   "deleteAll": "Delete all local data",
   "deleteAllTitle": "Delete all local data permanently?",
   "deleteAllBody": "Your list, settings, recovery copies and pending reminders will be removed. This cannot be undone in the app.",
-  "deleteError": "Not all local data could be deleted. Please try again."
+  "deleteError": "Not all local data could be deleted. Please try again.",
+  "onboardingSetup": "First-time setup",
+  "onboardingStep": "Step {step} of {total}",
+  "onboardingWelcome": "Welcome to Krampus!",
+  "onboardingWelcomeBody": "Plan your gifts and keep track of your budget. Choose the language you feel at home with.",
+  "onboardingBudgetTitle": "Your currency and budget",
+  "onboardingBudgetBody": "Choose your currency and how much you want to spend on gifts.",
+  "onboardingCurrencyHelp": "All amounts use the selected currency.",
+  "onboardingDefaultHelp": "The personal budget is filled in for each new person. You can adjust it for anyone.",
+  "onboardingNext": "Continue",
+  "onboardingBack": "Back",
+  "onboardingFinish": "Save and start",
+  "onboardingSkip": "Skip for now",
+  "onboardingSkipHelp": "Skipping keeps the default settings. You can change everything later in Settings."
 };

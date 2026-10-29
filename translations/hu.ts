@@ -85,5 +85,18 @@ export default {
   "deleteAll": "Összes helyi adat törlése",
   "deleteAllTitle": "Végleg törlöd az összes helyi adatot?",
   "deleteAllBody": "A lista, beállítások, helyreállítási példányok és várakozó emlékeztetők törlődnek. Ez az appban nem vonható vissza.",
-  "deleteError": "Nem sikerült minden helyi adatot törölni. Próbáld újra."
+  "deleteError": "Nem sikerült minden helyi adatot törölni. Próbáld újra.",
+  "onboardingSetup": "Kezdeti beállítások",
+  "onboardingStep": "{step}/{total}. lépés",
+  "onboardingWelcome": "Üdv a Krampusban!",
+  "onboardingWelcomeBody": "Tervezd meg az ajándékokat, és kövesd a költéseidet. Válaszd ki, milyen nyelven szeretnéd használni az appot.",
+  "onboardingBudgetTitle": "Pénznem és keretek",
+  "onboardingBudgetBody": "Válassz pénznemet, és állítsd be, mennyit szánsz az ajándékokra.",
+  "onboardingCurrencyHelp": "Minden összeg a kiválasztott pénznemben értendő.",
+  "onboardingDefaultHelp": "Az alapkeretet minden új személynél előre kitöltjük. Személyenként módosíthatod.",
+  "onboardingNext": "Tovább",
+  "onboardingBack": "Vissza",
+  "onboardingFinish": "Mentés és kezdés",
+  "onboardingSkip": "Most kihagyom",
+  "onboardingSkipHelp": "Kihagyáskor az alapbeállítások maradnak. Később mindent módosíthatsz a Beállításokban."
 } satisfies typeof en;
