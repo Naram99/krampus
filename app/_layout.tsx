@@ -5,12 +5,13 @@ import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from '../state/AppProvider';
+import { Onboarding } from '../components/Onboarding';
 
 function Navigator() {
   const router = useRouter();
-  const { attemptLeave } = useApp();
+  const { data, attemptLeave } = useApp();
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+    if (!data.onboardingCompleted || Platform.OS === 'web') return;
     const open = (response: Notifications.NotificationResponse) => {
       if (response.notification.request.content.data.type === 'present_reminder') {
         const proceed = () => {
@@ -23,7 +24,8 @@ function Navigator() {
     const subscription = Notifications.addNotificationResponseReceivedListener(open);
     void Notifications.getLastNotificationResponseAsync().then(response => { if (response) open(response); }).catch(() => undefined);
     return () => subscription.remove();
-  }, [router, attemptLeave]);
+  }, [router, attemptLeave, data.onboardingCompleted]);
+  if (!data.onboardingCompleted) return <><StatusBar style="dark" /><Onboarding /></>;
   return <><StatusBar style="light" /><Stack screenOptions={{ headerShown: false }} /></>;
 }
 export default function RootLayout() {

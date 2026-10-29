@@ -58,6 +58,7 @@ Generated `android/` is ignored by Git. Native project generation alone is not a
 
 ## Data and reminders
 
+- First-time installs show a skippable two-step setup for language, currency and total/personal budgets. Completing or skipping is remembered locally; existing installations keep their saved settings and bypass setup. See [docs/ONBOARDING.hu.md](docs/ONBOARDING.hu.md) for compatibility and device checks.
 - Version 2 stores amounts as integer hundredths. Comma and dot decimal input and grouped spaces are supported. Negative, partial and ambiguous values are rejected.
 - Existing `@krampus:people` and `@krampus:settings` data migrate without overwriting unreadable sources. The app offers an explicit last-good-copy restore if loading fails. Stored sources and recovery copies are removed by Delete all local data.
 - Settings save together. Currency changes retain the numerical amounts and require explicit confirmation; no exchange-rate conversion is performed.

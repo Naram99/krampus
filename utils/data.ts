@@ -9,7 +9,7 @@ export function deviceLanguage(): Language {
   } catch { return 'en'; }
 }
 export function defaultData(language: Language = deviceLanguage(), year = new Date().getFullYear()): AppData {
-  return { version: 2, shoppingYear: year, people: [], settings: {
+  return { version: 2, onboardingCompleted: false, shoppingYear: year, people: [], settings: {
     globalBudgetLimitMinor: null, defaultPriceLimitMinor: 5000, notificationsEnabled: false,
     currency: 'USD', language, reminderDays: [...DEFAULT_DAYS], reminderHour: 9, reminderMinute: 0,
   } };
@@ -33,6 +33,7 @@ function integer(value: unknown, min: number, max: number): number {
 export function validateData(value: unknown): AppData {
   const data = object(value);
   if (data.version !== 2) throw new Error('unsupportedVersion');
+  if (typeof data.onboardingCompleted !== 'boolean') throw new Error('invalidData');
   integer(data.shoppingYear, 2000, 9999);
   if (!Array.isArray(data.people) || data.people.length > 10000) throw new Error('invalidData');
   const ids = new Set<string>();
@@ -57,6 +58,13 @@ export function validateData(value: unknown): AppData {
   integer(settings.reminderHour, 0, 23); integer(settings.reminderMinute, 0, 59);
   return value as AppData;
 }
+/** Existing installations keep their settings and bypass first-install setup. */
+export function readStoredData(value: unknown): AppData {
+  const data = object(value);
+  return validateData(data.version === 2 && data.onboardingCompleted === undefined
+    ? { ...data, onboardingCompleted: true }
+    : data);
+}
 /** Reject unsupported legacy precision instead of silently rounding user's data. */
 function legacyMoney(value: unknown, positive = false): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error('invalidData');
@@ -77,13 +85,14 @@ export function migrateLegacy(peopleJson: string | null, settingsJson: string | 
   for (const key of ['currency', 'language', 'notificationsEnabled'] as const) {
     if (settings[key] !== undefined) Object.assign(nextSettings, { [key]: settings[key] });
   }
-  return validateData({ ...defaults, settings: nextSettings, people: people.map(raw => {
-    const p = object(raw);
-    // The former dashboard interpreted an absent purchased price as zero.
-    const actualPriceMinor = p.actualPrice === undefined ? (p.isBought === true ? 0 : undefined) : legacyMoney(p.actualPrice);
-    return { id: p.id, name: p.name, presentType: p.presentType ?? '', presentName: p.presentName ?? '',
-      priceLimitMinor: legacyMoney(p.priceLimit, true), isBought: p.isBought, actualPriceMinor };
-  }) });
+  return validateData({ ...defaults, onboardingCompleted: peopleJson !== null || settingsJson !== null,
+    settings: nextSettings, people: people.map(raw => {
+      const p = object(raw);
+      // The former dashboard interpreted an absent purchased price as zero.
+      const actualPriceMinor = p.actualPrice === undefined ? (p.isBought === true ? 0 : undefined) : legacyMoney(p.actualPrice);
+      return { id: p.id, name: p.name, presentType: p.presentType ?? '', presentName: p.presentName ?? '',
+        priceLimitMinor: legacyMoney(p.priceLimit, true), isBought: p.isBought, actualPriceMinor };
+    }) });
 }
 export function calculateStats(people: Person[], limit: number | null) {
   const bought = people.filter(p => p.isBought);
